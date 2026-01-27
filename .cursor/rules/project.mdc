@@ -1,0 +1,177 @@
+---
+alwaysApply: true
+---
+
+Live Coupon Project – Requirements and Processing Methodology
+
+Purpose
+This document outlines the core requirements of a live coupon (first-come, first-served) service and the technical approach to meeting them, based on the discussions so far.
+It assumes a frontend (React + TypeScript), backend (Spring Boot), and Redis.
+
+⸻
+
+1. Project Overview
+
+1.1 Service Goals
+• In an environment where multiple users access the service simultaneously,
+
+• Accurately and quickly issue coupons on a first-come, first-served basis.
+
+• Prevent duplicate or over-issuance,
+
+• Provide immediate responses to users.
+
+⸻
+
+2. System Configuration
+
+2.1 Overall Structure
+
+[ React (FE) ]
+↓ API Request
+[ Spring Boot (BE) ]
+↓
+[ Redis ] ← Cache / Concurrency Control / State Management
+↓
+[ RDBMS ] ← Persistent Data Storage
+
+2.2 Separation of Roles
+• React: Screen rendering, user event processing
+• Spring Boot: Business logic, validation, transaction management
+• Redis: Speed ​​improvement, concurrency control, temporary state storage
+• DB: Last coupon issuance history, user data persistence
+
+⸻
+
+3. Key Requirements and Processing Method
+
+3.1 First-come, first-served coupon issuance
+
+Requirements
+• Only a fixed number of coupons can be issued. • No over-issuance is allowed even if multiple users request the coupon simultaneously.
+
+Processing Method
+• Uses Redis's Atomic Operations
+• Manages coupon quantities in Redis
+
+Key: coupon:count:{couponId}
+Value: Remaining quantity
+
+• When requesting an issuance:
+1. Deduct the quantity from Redis (DECR)
+2. Success if the result is greater than or equal to 0
+3. Failure and rollback if the result is negative
+
+⸻
+
+3.2 Preventing Duplicate Coupon Issuance
+
+Requirements
+• Each user can only be issued the same coupon once.
+
+Processing Method
+• Uses Redis Set or SETNX
+
+Key: coupon:issued:{couponId}
+Value: userId
+
+• Checks whether a user has been issued a coupon in Redis before issuing.
+• If the coupon already exists, an immediate failure response is returned.
+
+⸻
+
+3.3 Fast Response Speed
+
+Requirements
+• Minimize API response delay even under heavy traffic.
+
+Processing Method
+• Minimize DB queries
+• Cache coupon information and status in Redis
+
+Key: coupon:detail:{couponId}
+
+• Query the database only in case of a cache miss
+
+Automatic renewal with TTL setting
+
+⸻
+
+3.4 Coupon Expiration Time Management
+
+Requirements
+• Coupons have an expiration date for issuance and use.
+
+Processing Method
+• Utilizes Redis TTL (Time To Live)
+
+SET coupon:active:{couponId} true EX 3600
+
+• Automatically removed from Redis upon expiration
+• No separate batch operation required
+
+⸻
+
+3.5 Traffic Surge Response
+
+Requirements
+• A surge in requests may occur at specific times (opening hours).
+
+Processing Method
+• Redis preprocessing → DB postprocessing structure
+• After initial verification in Redis, only successful requests are stored in the database.
+
+⸻
+
+4. React (front-end) Processing Method
+
+Role
+• Provide a coupon issuance button
+• UI processing based on the issuance result
+
+Flow
+1. User clicks the button
+2. Requests to the coupon issuance API
+3. Based on the response result
+• Success: Issuance completion message
+• Failure: Reason information (exhausted, duplicate, etc.)
+
+Does not communicate directly with Redis; always uses the Spring API Communication only through Redis
+
+⸻
+
+5. Spring Boot (Backend) Processing Method
+
+Main Responsibilities
+• Redis-based first-come, first-served / duplicate verification
+• Business logic processing
+• DB transaction management
+
+Summary of processing sequence
+1. Receive user request
+2. Redis duplicate issuance check
+3. Redis coupon quantity deduction
+4. If successful, save issuance history to the DB
+5. Return result
+
+⸻
+
+6. Summary of Redis usage purposes
+
+Purpose: Reason for using Redis
+
+First-come, first-served processing: Supports atomic operations
+Duplicate prevention: Set/NX operations
+Performance improvement: In-memory processing
+TTL management: Supports automatic expiration
+Traffic response: Reduces DB load
+
+⸻
+
+7. Summary
+• Redis for speed and concurrency control
+• DB as the final data storage
+• React for state representation and user experience
+
+The core of this project lies in
+first-come, first-served control and a stable DB storage structure using Redis.

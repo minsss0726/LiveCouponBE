@@ -1,0 +1,32 @@
+---
+alwaysApply: true
+---
+
+1. 디렉토리 구조
+
+1-1. src/main/java/com/project/coupon/config
+@Configuration 와 같은 설정 파일
+
+1-2. src/main/java/com/project/coupon/util
+Date 변환 등 유틸리티 함수 파일
+
+1-3. src/main/java/com/project/coupon/entity
+JPA Entity 파일
+
+1-4. src/main/java/com/project/coupon/exception
+예외 처리 관련 파일
+
+1-5. src/main/java/com/project/coupon/repository
+DB 접근 파일
+
+1-6. src/main/java/com/project/coupon/security
+시큐리티 관련 파일
+
+1-7. src/main/java/com/project/coupon/service
+@Service 파일
+
+1-8. src/main/java/com/project/coupon/controller
+@Controller 파일
+
+1-9. src/main/java/com/project/coupon/dto
+Front단 Request/Response 파일
