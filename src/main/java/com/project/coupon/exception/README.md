@@ -39,6 +39,8 @@ exception/
 ├── DuplicateCouponException.java      # 중복 쿠폰 발급
 ├── CouponExpiredException.java         # 쿠폰 발급 기간 만료
 ├── CouponNotFoundException.java       # 쿠폰 없음
+├── EventExpiredException.java         # 이벤트 기간 만료
+├── EventNotFoundException.java        # 이벤트 없음
 ├── UserNotFoundException.java         # 사용자 없음
 ├── InvalidRequestException.java        # 잘못된 요청
 └── RedisConnectionException.java       # Redis 연결 오류
@@ -53,6 +55,8 @@ RuntimeException
             ├── DuplicateCouponException (final)
             ├── CouponExpiredException (final)
             ├── CouponNotFoundException (final)
+            ├── EventExpiredException (final)
+            ├── EventNotFoundException (final)
             ├── UserNotFoundException (final)
             ├── InvalidRequestException (final)
             └── RedisConnectionException (final)
@@ -274,7 +278,44 @@ Coupons coupon = couponRepository.findById(couponId)
     .orElseThrow(() -> new CouponNotFoundException(couponId));
 ```
 
-#### 5. UserNotFoundException
+#### 5. EventNotFoundException
+
+**발생 시점**: 요청한 이벤트 ID에 해당하는 이벤트가 존재하지 않을 때
+
+**오류 코드**: `EVENT_NOT_FOUND`
+
+**HTTP 상태 코드**: `404 NOT_FOUND`
+
+**사용 예시**:
+
+```java
+Events event = eventsRepository.findByEventId(eventId)
+    .orElseThrow(() -> new EventNotFoundException(eventId));
+```
+
+#### 6. EventExpiredException
+
+**발생 시점**: 이벤트 진행 기간이 만료되었거나 아직 시작되지 않았을 때
+
+**오류 코드**: `EVENT_EXPIRED`
+
+**HTTP 상태 코드**: `409 CONFLICT`
+
+**사용 예시**:
+
+```java
+LocalDateTime now = LocalDateTime.now();
+if (now.isBefore(event.getEventStartDatetime())) {
+    throw new EventExpiredException(eventId, event.getEventStartDatetime());
+}
+if (now.isAfter(event.getEventEndDatetime())) {
+    throw new EventExpiredException(eventId,
+        event.getEventStartDatetime(),
+        event.getEventEndDatetime());
+}
+```
+
+#### 7. UserNotFoundException
 
 **발생 시점**: 요청한 사용자 ID에 해당하는 사용자가 존재하지 않을 때
 
@@ -291,7 +332,7 @@ Users user = userRepository.findById(userId)
 
 ### 시스템 예외
 
-#### 6. InvalidRequestException
+#### 8. InvalidRequestException
 
 **발생 시점**: 요청 파라미터가 유효하지 않거나 비즈니스 규칙에 위배될 때
 
@@ -307,7 +348,7 @@ if (couponId == null || couponId <= 0) {
 }
 ```
 
-#### 7. RedisConnectionException
+#### 9. RedisConnectionException
 
 **발생 시점**: Redis 서버와의 연결이 실패하거나 작업 중 오류가 발생했을 때
 
@@ -444,16 +485,18 @@ public class CouponController {
 
 ## HTTP 상태 코드 매핑
 
-| 예외 클래스                | 오류 코드                | HTTP 상태 코드              | 의미                         |
-| -------------------------- | ------------------------ | --------------------------- | ---------------------------- |
-| `CouponExhaustedException` | `COUPON_EXHAUSTED`       | `409 CONFLICT`              | 리소스 상태 충돌 (재고 부족) |
-| `DuplicateCouponException` | `DUPLICATE_COUPON`       | `409 CONFLICT`              | 리소스 상태 충돌 (중복)      |
-| `CouponExpiredException`   | `COUPON_EXPIRED`         | `409 CONFLICT`              | 리소스 상태 충돌 (만료)      |
-| `CouponNotFoundException`  | `COUPON_NOT_FOUND`       | `404 NOT_FOUND`             | 리소스를 찾을 수 없음        |
-| `UserNotFoundException`    | `USER_NOT_FOUND`         | `404 NOT_FOUND`             | 리소스를 찾을 수 없음        |
-| `InvalidRequestException`  | `INVALID_REQUEST`        | `400 BAD_REQUEST`           | 잘못된 요청                  |
-| `RedisConnectionException` | `REDIS_CONNECTION_ERROR` | `503 SERVICE_UNAVAILABLE`   | 서비스 일시 중단             |
-| 기타 예외                  | `INTERNAL_SERVER_ERROR`  | `500 INTERNAL_SERVER_ERROR` | 서버 내부 오류               |
+| 예외 클래스                | 오류 코드                | HTTP 상태 코드              | 의미                           |
+| -------------------------- | ------------------------ | --------------------------- | ------------------------------ |
+| `CouponExhaustedException` | `COUPON_EXHAUSTED`       | `409 CONFLICT`              | 리소스 상태 충돌 (재고 부족)   |
+| `DuplicateCouponException` | `DUPLICATE_COUPON`       | `409 CONFLICT`              | 리소스 상태 충돌 (중복)        |
+| `CouponExpiredException`   | `COUPON_EXPIRED`         | `409 CONFLICT`              | 리소스 상태 충돌 (만료)        |
+| `CouponNotFoundException`  | `COUPON_NOT_FOUND`       | `404 NOT_FOUND`             | 리소스를 찾을 수 없음          |
+| `EventNotFoundException`   | `EVENT_NOT_FOUND`        | `404 NOT_FOUND`             | 리소스를 찾을 수 없음          |
+| `EventExpiredException`    | `EVENT_EXPIRED`          | `409 CONFLICT`              | 리소스 상태 충돌 (이벤트 만료) |
+| `UserNotFoundException`    | `USER_NOT_FOUND`         | `404 NOT_FOUND`             | 리소스를 찾을 수 없음          |
+| `InvalidRequestException`  | `INVALID_REQUEST`        | `400 BAD_REQUEST`           | 잘못된 요청                    |
+| `RedisConnectionException` | `REDIS_CONNECTION_ERROR` | `503 SERVICE_UNAVAILABLE`   | 서비스 일시 중단               |
+| 기타 예외                  | `INTERNAL_SERVER_ERROR`  | `500 INTERNAL_SERVER_ERROR` | 서버 내부 오류                 |
 
 ---
 

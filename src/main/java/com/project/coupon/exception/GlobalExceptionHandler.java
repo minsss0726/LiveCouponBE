@@ -172,8 +172,9 @@ public final class GlobalExceptionHandler {
      */
     private HttpStatus determineHttpStatus(final BaseException exception) {
         return switch (exception.getErrorCode()) {
-            case "COUPON_EXHAUSTED", "DUPLICATE_COUPON", "COUPON_EXPIRED" -> HttpStatus.CONFLICT;
-            case "COUPON_NOT_FOUND", "USER_NOT_FOUND" -> HttpStatus.NOT_FOUND;
+            case "COUPON_EXHAUSTED", "DUPLICATE_COUPON", "COUPON_EXPIRED",
+                 "EVENT_EXPIRED" -> HttpStatus.CONFLICT;
+            case "COUPON_NOT_FOUND", "USER_NOT_FOUND", "EVENT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "INVALID_REQUEST" -> HttpStatus.BAD_REQUEST;
             case "REDIS_CONNECTION_ERROR" -> HttpStatus.SERVICE_UNAVAILABLE;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
