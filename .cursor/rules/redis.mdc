@@ -1,0 +1,183 @@
+---
+alwaysApply: true
+---
+
+Redis Utilization and Backend Logic Design Document
+
+1. Purpose of Redis Implementation
+
+This project assumes a high-traffic environment where multiple users simultaneously request coupon issuance at a given point in time. In this situation, using only DB-based counting and transaction processing can lead to the following issues:
+
+• Possibility of over-issuance due to concurrency contention
+
+• Performance degradation due to row locks/table locks
+
+• DB bottlenecks during peak traffic
+
+To address these issues, Redis is used as the central component for first-come, first-served control, with the database limited to storing final results.
+
+⸻
+
+2. Summary of Redis Usage Scope
+
+Classification: Redis Role
+Coupon Quantity Management: Accurate Quantity Control through Atomic Operations
+Preventing Duplicate Issuance: Storing Issued User Status
+Event Activation Status: Event Start/End Control
+Bot Traffic Response: Rate Limiting (Account/IP Based)
+High-Performance Processing: DB Load Balancing
+
+⸻
+
+3. Redis Key Design
+
+3.1 Coupon Stock Management
+
+coupon:{couponId}:stock
+
+• Type: String
+• Default Value: coupon_total_count
+• Command: DECR
+• Features:
+• Guaranteed Redis Atomic Operations
+• Maintaining Accurate Quantities Even with Concurrent Requests
+
+⸻
+
+3.2 Coupon Issued User Management
+
+coupon:{couponId}:issued_users
+
+• Type: Set
+• Value: userId
+• Command: SADD, SISMEMBER
+• Purpose:
+• Guaranteed One Coupon Per Person
+• Duplicate Issuance Prevention
+
+⸻
+
+3.3 Event Active Status Management
+
+event:{eventId}:active
+
+• Type: String (true / false)
+• Purpose:
+• Block requests before the event starts
+• Prevent additional issuance after the event ends
+
+⸻
+
+3.4 Rate Limiting (Bot Protection)
+
+rate:user:{userId}
+rate:ip:{ipAddress}
+
+• Type: String
+• TTL-based count
+• Purpose:
+• Request limit per account/IP
+• Suppress automated bot requests
+
+⸻
+
+4. Core Logic for Coupon Issuance (Redis-based)
+
+4.1 Summary of Processing Flow
+
+1. Check if the event is active
+2. Check if a user has been issued duplicates
+3. Deduct coupon inventory
+4. Register the user if issuance is successful
+5. Store the issuance result in the database
+
+Steps 2-4 must be processed atomically.
+
+⸻
+
+4.2 Lua Script-Based Atomic Processing
+
+Since Redis cannot guarantee the atomicity of complex logic with a single command, Lua Scripts are used.
+
+Processing Purpose
+• Prevent duplicate issuance
+• Prevent excessive issuance
+• Lock-free concurrency control
+
+Lua ​​Script Concept Flow
+• Check if the user has already been issued a coupon
+• Decrease inventory
+• Add to the issuance user set if successful
+
+Result Code Meaning
+
+Return Value Meaning
+1 Issuance success
+0 Inventory depleted
+-1 User already issued a coupon
+
+⸻
+
+5. Using Redis in Spring Boot Backend Logic
+
+5.1 Separation of Responsibilities for the Coupon Issuance API
+• Redis
+• First-come, first-served decision
+• Concurrency control
+• Traffic processing
+• Database
+• Persist issuance results
+• History management
+
+⸻
+
+5.2 Coupon Issuance API Flow
+
+1. User authentication and token verification
+2. Rate limiting check (Redis)
+3. Check event activity (Redis)
+4. Execute Lua Script
+5. Save to DB (UserCoupon) if successful
+6. Return a response based on the failure reason
+
+⸻
+
+6. Compensation strategy for DB storage failure
+
+Problem Situation
+• Issuance in Redis Success
+• Exception occurred while saving to the database
+
+Response strategy
+• Logging failed issuances
+• Administrator reprocessing or batch recovery
+• Redis inventory correction if necessary
+
+This project aims to document a rewards scenario that takes practical design into account.
+
+⸻
+
+7. Summary of the Advantages of Redis
+   • Tens of thousands of requests per second
+   • Elimination of database locks
+   • Guaranteed first-come, first-served order
+   • Ability to handle bot traffic
+   • Favorable for horizontal scalability
+
+⸻
+
+8. Summary sentence for interview use
+
+This project utilized Redis-based atomic operations and Lua scripts to resolve concurrency issues arising from first-come, first-served coupon issuance. This approach prevents over-issuance and duplicate issuance. The database was designed separately to store the final results.
+
+⸻
+
+9. Future Scalability
+   • Redis Cluster Configuration
+   • Asynchronous Processing Based on Message Queues (Kafka)
+   • CAPTCHA Integration
+   • Real-Time Remaining Quantity Push
+
+⸻
+
+This document is a technical document that clearly describes our experience handling high-volume traffic. It can be used as a portfolio and interview presentation material.
