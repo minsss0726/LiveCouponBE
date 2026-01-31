@@ -28,7 +28,7 @@ public class SecurityConfig {
      *
      * - JSESSIONID 기반 세션(기본 값) 사용
      * - /login 은 로그인 페이지로 허용
-     * - 로그인 성공 시 / 로 이동
+     * - 로그인 성공 시 /events 로 이동
      * - 그 외 요청은 ROLE_USER 필요
      * - CORS 설정은 CorsConfig 의 Bean 을 사용
      */
@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")              // 로그인 페이지 URL
                         .loginProcessingUrl("/login")     // 인증 처리 URL (form action)
-                        .defaultSuccessUrl("/", true)     // 로그인 성공 시 / 로 이동
+                        .defaultSuccessUrl("/events", true)     // 로그인 성공 시 /events 로 이동
                         .permitAll()
                 )
 
