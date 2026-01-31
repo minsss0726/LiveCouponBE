@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+
+# Page
+
+- Login Page (Main)
+  1,000 random IDs are generated for the bot to use.
+- My Page
+  Displays issued coupons.
+- Event List Page
+  Displays a list of events.
+- Event Details Page
+  Displays event details and the actual coupon issuer.
+- Admin Page
+  No separate login required. Only buttons for opening registered events (Redis coupon registration) are present.
