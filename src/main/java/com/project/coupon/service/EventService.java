@@ -1,5 +1,7 @@
 package com.project.coupon.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -58,15 +60,28 @@ public class EventService {
     }
 
     /**
-     * 이벤트가 열릴 때 해당 이벤트의 모든 쿠폰 초기 재고를 Redis에 저장한다.
-     * DB의 coupon_total_count(초기 개수)를 Redis coupon:{couponId}:stock 에 세팅한다.
+     * 이벤트가 열릴 때 해당 이벤트의 모든 쿠폰 초기 재고를 Redis에 저장하고,
+     * event:{eventId}:active, coupon:active:{couponId} TTL을 설정한다.
      *
      * @param eventId 이벤트 ID
      */
     public void initializeCouponStocksForEvent(final Long eventId) {
+        Events event = eventsRepository.findById(eventId)
+            .orElseThrow(() -> new EventNotFoundException(eventId));
+        LocalDateTime now = LocalDateTime.now();
+
+        long eventTtlSeconds = Duration.between(now, event.getEventEndDatetime()).getSeconds();
+        if (eventTtlSeconds > 0) {
+            couponRedisService.setEventActive(eventId, eventTtlSeconds);
+        }
+
         List<Coupons> coupons = couponsRepository.findAllByEvent_EventId(eventId);
         for (Coupons coupon : coupons) {
             couponRedisService.initializeStock(coupon.getCouponId(), coupon.getCouponTotalCount());
+            long couponTtlSeconds = Duration.between(now, coupon.getCouponApplyEndDatetime()).getSeconds();
+            if (couponTtlSeconds > 0) {
+                couponRedisService.setCouponActive(coupon.getCouponId(), couponTtlSeconds);
+            }
         }
     }
 }

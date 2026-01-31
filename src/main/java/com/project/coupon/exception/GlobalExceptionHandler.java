@@ -176,6 +176,7 @@ public final class GlobalExceptionHandler {
                  "EVENT_EXPIRED" -> HttpStatus.CONFLICT;
             case "COUPON_NOT_FOUND", "USER_NOT_FOUND", "EVENT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "INVALID_REQUEST" -> HttpStatus.BAD_REQUEST;
+            case "RATE_LIMIT_EXCEEDED" -> HttpStatus.TOO_MANY_REQUESTS;
             case "REDIS_CONNECTION_ERROR" -> HttpStatus.SERVICE_UNAVAILABLE;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
