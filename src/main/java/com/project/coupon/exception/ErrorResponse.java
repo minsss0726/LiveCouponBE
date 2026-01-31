@@ -41,6 +41,18 @@ public final class ErrorResponse {
     }
     
     /**
+     * 오류 코드·메시지·경로로 ErrorResponse를 생성합니다.
+     *
+     * @param errorCode 오류 코드
+     * @param message 오류 메시지
+     * @param path 요청 경로
+     * @return ErrorResponse 인스턴스
+     */
+    public static ErrorResponse of(final String errorCode, final String message, final String path) {
+        return new ErrorResponse(errorCode, message, path);
+    }
+
+    /**
      * BaseException으로부터 ErrorResponse를 생성합니다.
      * 
      * @param exception 예외 객체

@@ -46,7 +46,7 @@ public class AdminController {
     })
     @PostMapping("/{eventId}/initialize-coupons")
     public ResponseEntity<Void> initializeCouponStocks(
-            @Parameter(description = "이벤트 ID") @PathVariable final Long eventId) {
+            @Parameter(description = "이벤트 ID") @PathVariable("eventId") final Long eventId) {
         eventService.initializeCouponStocksForEvent(eventId);
         return ResponseEntity.ok().build();
     }

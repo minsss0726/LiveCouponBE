@@ -47,7 +47,7 @@ public class EventController {
     })
     @GetMapping("/{eventId}")
     public ResponseEntity<EventResponse> getEventById(
-            @Parameter(description = "이벤트 ID") @PathVariable final Long eventId) {
+            @Parameter(description = "이벤트 ID") @PathVariable("eventId") final Long eventId) {
         return ResponseEntity.ok(eventService.getEventById(eventId));
     }
 
@@ -58,7 +58,7 @@ public class EventController {
     })
     @GetMapping("/{eventId}/coupons")
     public ResponseEntity<List<CouponResponse>> getCouponsByEventId(
-            @Parameter(description = "이벤트 ID") @PathVariable final Long eventId) {
+            @Parameter(description = "이벤트 ID") @PathVariable("eventId") final Long eventId) {
         return ResponseEntity.ok(eventService.getCouponsByEventId(eventId));
     }
     
@@ -69,7 +69,7 @@ public class EventController {
     })
     @PostMapping("/{eventId}/initialize-coupons")
     public ResponseEntity<Void> initializeCouponStocks(
-            @Parameter(description = "이벤트 ID") @PathVariable final Long eventId) {
+            @Parameter(description = "이벤트 ID") @PathVariable("eventId") final Long eventId) {
         eventService.initializeCouponStocksForEvent(eventId);
         return ResponseEntity.noContent().build();
     }

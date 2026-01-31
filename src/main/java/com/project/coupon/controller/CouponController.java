@@ -41,7 +41,7 @@ public class CouponController {
     })
     @PostMapping("/{couponId}/issue")
     public ResponseEntity<Void> issueCoupon(
-            @Parameter(description = "쿠폰 ID") @PathVariable final Long couponId,
+            @Parameter(description = "쿠폰 ID") @PathVariable("couponId") final Long couponId,
             final HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
