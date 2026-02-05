@@ -73,6 +73,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers("/auth/login", "/login", "/login-form").permitAll()
+                        .requestMatchers("/coupons/*/issue/*").permitAll()
                         .anyRequest().hasRole("USER")
                 )
 

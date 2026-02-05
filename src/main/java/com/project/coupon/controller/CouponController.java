@@ -32,6 +32,23 @@ public class CouponController {
 
     private final CouponService couponService;
 
+    @Operation(summary = "쿠폰 발급 (테스트)", description = "로그인 없이 userId를 path로 넘겨 쿠폰 발급 테스트. 인증 불필요.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "발급 성공"),
+            @ApiResponse(responseCode = "409", description = "재고 소진 / 중복 발급 / 이벤트 종료 등", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "쿠폰/이벤트 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "요청 제한 초과 (Rate limit)", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/{couponId}/issue/{userId}")
+    public ResponseEntity<Void> issueCouponForTest(
+            @Parameter(description = "쿠폰 ID") @PathVariable("couponId") final Long couponId,
+            @Parameter(description = "사용자 ID (테스트용)") @PathVariable("userId") final Long userId,
+            final HttpServletRequest request) {
+        String clientIp = resolveClientIp(request);
+        couponService.issueCoupon(userId, couponId, clientIp);
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "쿠폰 발급", description = "선착순 쿠폰 발급. Rate limit은 유저 ID 및 클라이언트 IP 기준으로 적용됩니다. 로그인 필요.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "발급 성공"),

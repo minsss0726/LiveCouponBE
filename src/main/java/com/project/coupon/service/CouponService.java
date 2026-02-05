@@ -15,7 +15,6 @@ import com.project.coupon.entity.UserCoupon;
 import com.project.coupon.entity.Users;
 import com.project.coupon.entity.enums.CouponStatus;
 import com.project.coupon.exception.CouponExhaustedException;
-import com.project.coupon.exception.CouponExpiredException;
 import com.project.coupon.exception.CouponNotFoundException;
 import com.project.coupon.exception.DuplicateCouponException;
 import com.project.coupon.exception.EventExpiredException;
@@ -124,13 +123,7 @@ public class CouponService {
                 coupon.getEvent().getEventStartDatetime(),
                 coupon.getEvent().getEventEndDatetime());
         }
-        if (now.isBefore(coupon.getCouponApplyStartDatetime()) ||
-            now.isAfter(coupon.getCouponApplyEndDatetime())) {
-            throw new CouponExpiredException(couponId);
-        }
-        if (!couponRedisService.isCouponActive(couponId)) {
-            throw new CouponExpiredException(couponId);
-        }
+        // 쿠폰 발급 가능 여부는 이벤트 기간만 검사. couponApplyStart/End는 발급과 무관(다른 코드에서 사용).
 
         if (!couponRedisService.checkAndIncrementRate(userId, clientIp)) {
             throw new TooManyRequestsException();

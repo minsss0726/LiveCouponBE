@@ -1,8 +1,7 @@
 package com.project.coupon.dto;
 
-import java.time.LocalDateTime;
-
 import com.project.coupon.entity.Events;
+import com.project.coupon.util.DateTimeFormatUtil;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,11 +22,12 @@ public final class EventResponse {
     private Long eventId;
     private String eventName;
     private String eventDetail;
-    private LocalDateTime eventStartDatetime;
-    private LocalDateTime eventEndDatetime;
+    private String eventStartDatetime;
+    private String eventEndDatetime;
 
     /**
      * Entity를 Response DTO로 변환합니다.
+     * 날짜/시간은 "yyyy년 MM월 dd일 HH:mm:ss" 형식 문자열로 변환됩니다.
      *
      * @param event Events entity
      * @return EventResponse
@@ -37,8 +37,8 @@ public final class EventResponse {
             .eventId(event.getEventId())
             .eventName(event.getEventName())
             .eventDetail(event.getEventDetail())
-            .eventStartDatetime(event.getEventStartDatetime())
-            .eventEndDatetime(event.getEventEndDatetime())
+            .eventStartDatetime(DateTimeFormatUtil.format(event.getEventStartDatetime()))
+            .eventEndDatetime(DateTimeFormatUtil.format(event.getEventEndDatetime()))
             .build();
     }
 }
